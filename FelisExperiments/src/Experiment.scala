@@ -14,8 +14,8 @@ class ExperimentRunException extends Exception {}
 object Experiment {
   var ControllerHost = System.getProperty("controller.host", "127.0.0.1:3148")
   var ControllerHttp = System.getProperty("controller.http", "127.0.0.1:8666")
-  var Binary = "~/workspace/felis/buck-out/gen/db#release"
-  var WorkingDir = "~/workspace/felis/results"
+  var Binary = "~/caracal/felis/buck-out/gen/db#release"
+  var WorkingDir = "~/caracal/felis/results"
 }
 
 trait Experiment {
@@ -24,7 +24,7 @@ trait Experiment {
   private var valid = true
 
   def cpu = 16
-  def memory = 16
+  def memory = 2 
   def epochSize = -1
   def plotSymbol = ""
 
