@@ -583,7 +583,7 @@ object ExperimentsMain extends App {
       // runs.append(new YcsbTSTOExperiment())
       Seq(PartitionMode.PWV, PartitionMode.Granola, PartitionMode.Bohm) foreach {
         implicit mode =>
-        runs.append(new YcsbPartitionExperiment())
+        //runs.append(new YcsbPartitionExperiment())
       }
       // Deprecated:
       // runs.append(new YcsbCaracalSerialExperiment())
@@ -591,10 +591,20 @@ object ExperimentsMain extends App {
       // runs.append(new YcsbFoedusOCCExperiment())
     }
 
-    for (cpu <- Seq(8, 16, 24, 32)) {
+    val skewFactor = 0
+    val contend = false
+
+    for (cfg <- Seq(
+         new YcsbExperimentConfig(8, 12, skewFactor, if (contend) 7 else 0),
+         new YcsbExperimentConfig(16, 18, skewFactor, if (contend) 7 else 0))) {
+           setupExperiments(cfg)
+    }
+      
+    /*for (cpu <- Seq(8, 16, 24, 32)) {
       for (contend <- Seq(false, true)) {
         for (skewFactor <- Seq(0, 90)) {
-          val mem = 32
+          // val mem = 32
+          val mem = 12
           for (cfg <- Seq(new YcsbExperimentConfig(cpu, mem, skewFactor, if (contend) 7 else 0))) {
             setupExperiments(cfg)
           }
@@ -607,7 +617,7 @@ object ExperimentsMain extends App {
       //     setupExperiments(cfg)
       //   }
       // }
-    }
+    }*/
   }
 
   def tuningYcsbExperiements(cpu: Int = 32)(implicit tuningConfig: CaracalTuningConfig) = {
