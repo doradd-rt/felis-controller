@@ -224,6 +224,7 @@ class YcsbCaracalSerialExperiment(implicit val config: YcsbExperimentConfig, imp
 }
 
 class CaracalTuningConfig(val splittingThreshold: Int = -1, val optLevel: Int = 2) {}
+class CaracalLatencyConfig(val nrEpoch: Int = -1, val interArrival: Int = -1) {}
 
 trait CaracalTuningTrait extends Experiment {
   def addTuningAttributes(config: CaracalTuningConfig) = {
@@ -234,6 +235,11 @@ trait CaracalTuningTrait extends Experiment {
     } else {
       addAttribute(s"O${config.optLevel}")
     }
+  }
+
+  def addLatencyAttributes(config: CaracalLatencyConfig) = {
+    addAttribute(s"ne${config.nrEpoch}")
+    addAttribute(s"ia${config.interArrival}")
   }
 
   def extraCmdArguments(tuningConfig: CaracalTuningConfig, defaultSplittingThresold: Int) = {
@@ -261,15 +267,36 @@ trait CaracalTuningTrait extends Experiment {
       sys.exit(-1)
     }
   }
+
+  def extraLatencyArguments(latencyConfig: CaracalLatencyConfig) = {
+    //might double add arguments for NrEpoch?
+    if (latencyConfig.nrEpoch == -1) {
+      Array[String]()
+    } else {
+      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_uniform_no_cont.txt")
+      extraLatencyArgs += s"-XNrEpoch${latencyConfig.nrEpoch}" 
+      if (latencyConfig.nrEpoch < 2000) {
+        val epoch_sz = 200000 / latencyConfig.nrEpoch
+        extraLatencyArgs += s"-XEpochSize${epoch_sz}"
+      } else {
+        extraLatencyArgs += s"-XEpochSize100"
+      }
+      extraLatencyArgs += s"-XInterArrivalexp:${latencyConfig.interArrival}"
+      extraLatencyArgs.toArray  
+    }
+  }
 }
 
 class YcsbCaracalPieceExperiment(
   implicit val config: YcsbExperimentConfig,
-  implicit val tuningConfig: CaracalTuningConfig = new CaracalTuningConfig())
+  implicit val tuningConfig: CaracalTuningConfig = new CaracalTuningConfig(),
+  implicit val latencyConfig: CaracalLatencyConfig = new CaracalLatencyConfig(),
+  )
     extends BaseYcsbExperiment with CaracalTuningTrait {
 
   addAttribute("caracal-pieces")
   addTuningAttributes(tuningConfig)
+  addLatencyAttributes(latencyConfig)
 
   override def plotSymbol = "Caracal"
 
@@ -279,8 +306,10 @@ class YcsbCaracalPieceExperiment(
       default = if (skewFactor == 0) 2048 else 16
     }
 
-    if (epochSize > 0) default = Math.max(2, default * config.epochSize / 50000)
-    super.cmdArguments() ++ extraCmdArguments(tuningConfig, default.toInt)
+    if (latencyConfig.nrEpoch == -1) {
+      if (epochSize > 0) default = Math.max(2, default * config.epochSize / 50000)
+    }
+    super.cmdArguments() ++ extraCmdArguments(tuningConfig, default.toInt) ++ extraLatencyArguments(latencyConfig)
   }
 }
 
@@ -591,20 +620,20 @@ object ExperimentsMain extends App {
       // runs.append(new YcsbFoedusOCCExperiment())
     }
 
-    val skewFactor = 0
+    /*val skewFactor = 0
     val contend = false
 
     for (cfg <- Seq(
          new YcsbExperimentConfig(8, 12, skewFactor, if (contend) 7 else 0),
          new YcsbExperimentConfig(16, 18, skewFactor, if (contend) 7 else 0))) {
            setupExperiments(cfg)
-    }
+    }*/
       
-    /*for (cpu <- Seq(8, 16, 24, 32)) {
+    for (cpu <- Seq(24)) {
       for (contend <- Seq(false, true)) {
         for (skewFactor <- Seq(0, 90)) {
           // val mem = 32
-          val mem = 12
+          val mem = 18
           for (cfg <- Seq(new YcsbExperimentConfig(cpu, mem, skewFactor, if (contend) 7 else 0))) {
             setupExperiments(cfg)
           }
@@ -617,7 +646,7 @@ object ExperimentsMain extends App {
       //     setupExperiments(cfg)
       //   }
       // }
-    }*/
+    }
   }
 
   def tuningYcsbExperiements(cpu: Int = 32)(implicit tuningConfig: CaracalTuningConfig) = {
@@ -625,12 +654,21 @@ object ExperimentsMain extends App {
 
     for (cfg <- Seq(
       // new YcsbExperimentConfig(cpu, 32, 90, 0, false),
-      new YcsbExperimentConfig(cpu, 32, 0, 7, false),
-      new YcsbExperimentConfig(cpu, 32, 90, 7, false))) {
+      new YcsbExperimentConfig(cpu, 18, 0, 7, false),
+      new YcsbExperimentConfig(cpu, 18, 90, 7, false))) {
 
       implicit val config = cfg
       runs.append(new YcsbCaracalPieceExperiment())
     }
+
+    runs
+  }
+
+  def latencyYcsbExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
+    val runs = ArrayBuffer[BaseYcsbExperiment]()
+
+    implicit val config = new YcsbExperimentConfig(cpu, 18, 0, 0, false, 0) 
+    runs.append(new YcsbCaracalPieceExperiment())
 
     runs
   }
@@ -673,13 +711,26 @@ object ExperimentsMain extends App {
   ExperimentSuite("TestOpt", "Test how our optimzations work") {
     runs: ArrayBuffer[Experiment] =>
 
-    for (optLevel <- Seq(0, 1, 2, 9)) {
+    for (optLevel <- Seq(/*0, 1, */2/*,9*/)) {
       implicit val tuningConfig = new CaracalTuningConfig(-1, optLevel)
-      for (cpu <- Seq(8, 16, 24, 32)) {
+      for (cpu <- Seq(/*8, 16, */24)) {
         runs ++= tuningYcsbExperiements(cpu)
-        runs ++= tuningTpccExperiments(cpu, true)
+        //runs ++= tuningTpccExperiments(cpu, true)
       }
     }
+  }
+
+  ExperimentSuite("YcsbLatency", "Latency v.s. Throughput by tunning epoch size") {
+    runs: ArrayBuffer[Experiment] =>
+
+    for (nrEpoch <- Seq(/*200, 2000, */20000)) {
+      for (interArrival <- Seq(1000, 2000, 4000, 6000, 8000, 10000, 12000, 15000)){
+        implicit val latencyConfig = new CaracalLatencyConfig(nrEpoch, interArrival)
+        implicit val cpu = 24
+        runs ++= latencyYcsbExperiments(cpu)
+      }
+    }
+
   }
 
   ExperimentSuite("TpccSingle", "Single Node TPC-C") {
@@ -776,7 +827,7 @@ object ExperimentsMain extends App {
 
     for (optLevel <- 0 :: 1 :: 2 :: 9 :: Nil) {
       implicit val tuningConfig = new CaracalTuningConfig(-1, optLevel)
-      val experiments = tuningYcsbExperiements() ++ tuningTpccExperiments()
+      val experiments = tuningYcsbExperiements() //++ tuningTpccExperiments()
       a.value ++= experiments.flatMap {
         w =>
         val arr = w.loadResults().value
