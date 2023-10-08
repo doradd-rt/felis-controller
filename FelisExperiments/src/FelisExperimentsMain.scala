@@ -224,7 +224,7 @@ class YcsbCaracalSerialExperiment(implicit val config: YcsbExperimentConfig, imp
 }
 
 class CaracalTuningConfig(val splittingThreshold: Int = -1, val optLevel: Int = 2) {}
-class CaracalLatencyConfig(val nrEpoch: Int = -1, val interArrival: Int = -1) {}
+class CaracalLatencyConfig(val epochSize: Int = -1, val interArrival: Int = -1) {}
 
 trait CaracalTuningTrait extends Experiment {
   def addTuningAttributes(config: CaracalTuningConfig) = {
@@ -238,7 +238,7 @@ trait CaracalTuningTrait extends Experiment {
   }
 
   def addLatencyAttributes(config: CaracalLatencyConfig) = {
-    addAttribute(s"ne${config.nrEpoch}")
+    addAttribute(s"es${config.epochSize}")
     addAttribute(s"ia${config.interArrival}")
   }
 
@@ -269,17 +269,16 @@ trait CaracalTuningTrait extends Experiment {
   }
 
   def extraLatencyArguments(latencyConfig: CaracalLatencyConfig) = {
-    //might double add arguments for NrEpoch?
-    if (latencyConfig.nrEpoch == -1) {
+    if (latencyConfig.epochSize == -1) {
       Array[String]()
     } else {
       val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_uniform_no_cont.txt")
-      extraLatencyArgs += s"-XNrEpoch${latencyConfig.nrEpoch}" 
-      if (latencyConfig.nrEpoch < 2000) {
-        val epoch_sz = 200000 / latencyConfig.nrEpoch
-        extraLatencyArgs += s"-XEpochSize${epoch_sz}"
+      extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
+      if (latencyConfig.epochSize < 2000) {
+        val nrEpoch = 200000 / latencyConfig.epochSize
+        extraLatencyArgs += s"-XNrEpoch${nrEpoch}"
       } else {
-        extraLatencyArgs += s"-XEpochSize100"
+        extraLatencyArgs += s"-XNrEpoch100"
       }
       extraLatencyArgs += s"-XInterArrivalexp:${latencyConfig.interArrival}"
       extraLatencyArgs.toArray  
@@ -306,7 +305,7 @@ class YcsbCaracalPieceExperiment(
       default = if (skewFactor == 0) 2048 else 16
     }
 
-    if (latencyConfig.nrEpoch == -1) {
+    if (latencyConfig.epochSize == -1) {
       if (epochSize > 0) default = Math.max(2, default * config.epochSize / 50000)
     }
     super.cmdArguments() ++ extraCmdArguments(tuningConfig, default.toInt) ++ extraLatencyArguments(latencyConfig)
@@ -723,9 +722,9 @@ object ExperimentsMain extends App {
   ExperimentSuite("YcsbLatency", "Latency v.s. Throughput by tunning epoch size") {
     runs: ArrayBuffer[Experiment] =>
 
-    for (nrEpoch <- Seq(/*200, 2000, */20000)) {
-      for (interArrival <- Seq(1000, 2000, 4000, 6000, 8000, 10000, 12000, 15000)){
-        implicit val latencyConfig = new CaracalLatencyConfig(nrEpoch, interArrival)
+    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000)) {
+      for (interArrival <- Seq(100, 200, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000)){
+        implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
         implicit val cpu = 24
         runs ++= latencyYcsbExperiments(cpu)
       }
