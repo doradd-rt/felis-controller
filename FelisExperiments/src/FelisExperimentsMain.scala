@@ -312,6 +312,27 @@ class YcsbCaracalPieceExperiment(
   }
 }
 
+class YcsbGranolaExperiment(
+  implicit val config: YcsbExperimentConfig,
+  implicit val latencyConfig: CaracalLatencyConfig = new CaracalLatencyConfig(),
+  )
+    extends BaseYcsbExperiment with CaracalTuningTrait {
+  // CaracalTuningTrait for latencyArgs
+
+  addAttribute("caracal-pieces")
+  addLatencyAttributes(latencyConfig)
+
+  override def plotSymbol = "Caracal"
+
+  override def cmdArguments() = {
+    var default: Long = 100000
+    if (contentionLevel != 0) {
+      default = if (skewFactor == 0) 2048 else 16
+    }
+    super.cmdArguments() ++ Array[String]("-XVHandleLockElision", "-XEnablePartition", "-XEnableGranola") ++ extraLatencyArguments(latencyConfig)
+  }
+}
+
 object PartitionMode extends Enumeration {
   type PartitionMode = Value
   val Bohm, PWV, Granola = Value
@@ -666,8 +687,17 @@ object ExperimentsMain extends App {
   def latencyYcsbExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
     val runs = ArrayBuffer[BaseYcsbExperiment]()
 
-    implicit val config = new YcsbExperimentConfig(cpu, 18, 0, 0, false, 0) 
+    implicit val config = new YcsbExperimentConfig(cpu, 18, 0, 0, false, 0)
     runs.append(new YcsbCaracalPieceExperiment())
+
+    runs
+  }
+
+  def latencyYcsbGranolaExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
+    val runs = ArrayBuffer[BaseYcsbExperiment]()
+
+    implicit val config = new YcsbExperimentConfig(cpu, 18, 0, 0, false, 0) 
+    runs.append(new YcsbGranolaExperiment())
 
     runs
   }
@@ -727,6 +757,19 @@ object ExperimentsMain extends App {
         implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
         implicit val cpu = 24
         runs ++= latencyYcsbExperiments(cpu)
+      }
+    }
+
+  }
+
+  ExperimentSuite("YcsbGranolaLatency", "Latency v.s. Throughput by tunning epoch size") {
+    runs: ArrayBuffer[Experiment] =>
+
+    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000)) {
+      for (interArrival <- Seq(100, 200, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000)){
+        implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
+        implicit val cpu = 24
+        runs ++= latencyYcsbGranolaExperiments(cpu)
       }
     }
 
