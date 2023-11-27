@@ -53,9 +53,10 @@ abstract class BaseYcsbExperiment extends Experiment with YcsbContended with Ycs
 
   override def cmdArguments(): Array[String] = {
     super.cmdArguments() ++
-    (if (contentionLevel == 0) Array("-XYcsbReadOnly8") else Array(s"-XYcsbContentionKey${contentionLevel}")) ++
+    (if (contentionLevel == 0) Array("-XYcsbReadOnly10") else Array(s"-XYcsbContentionKey${contentionLevel}")) ++
     (if (skewFactor > 0) Array("-XYcsbSkewFactor%03d".format(skewFactor)) else Array[String]()) ++
-    (if (dependency) Array("-XYcsbDependency") else Array[String]()) ++
+    //(if (dependency) 
+    Array("-XYcsbDependency") ++//else Array[String]()) ++
     (if (epochSize == -1 && contentionLevel != 0)
       (if (skewFactor == 0) Array[String]("-XEpochSize50000", "-XNrEpoch80") else Array[String]("-XEpochSize25000", "-XNrEpoch160"))
     else Array[String]())
@@ -272,13 +273,15 @@ trait CaracalTuningTrait extends Experiment {
     if (latencyConfig.epochSize == -1) {
       Array[String]()
     } else {
-      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_uniform_no_cont.txt")
+      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/txn_logs/ycsb_uniform_no_cont.txt")
+      //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/ycsb_uniform_no_cont.txt")
+      //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/yscb_uniform_100_chain.txt")
       extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
       if (latencyConfig.epochSize < 2000) {
         val nrEpoch = 200000 / latencyConfig.epochSize
         extraLatencyArgs += s"-XNrEpoch${nrEpoch}"
       } else {
-        extraLatencyArgs += s"-XNrEpoch100"
+        extraLatencyArgs += s"-XNrEpoch50"
       }
       extraLatencyArgs += s"-XInterArrivalexp:${latencyConfig.interArrival}"
       extraLatencyArgs.toArray  
@@ -346,7 +349,8 @@ trait PartitionTuningTrait {
       case PartitionMode.PWV => Array[String]("-XEnablePartition", "-XEnablePWV")
       case PartitionMode.Granola => Array[String]("-XEnablePartition", "-XEnableGranola")
     }
-    Array[String]("-XVHandleLockElision") ++ extra
+    val extraLogArgs = ArrayBuffer[String]("-XLogFilxe/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_zipfian_high_cont.txt")
+    Array[String]("-XVHandleLockElision") ++ extra ++ extraLogArgs
   }
 }
 
@@ -630,10 +634,10 @@ object ExperimentsMain extends App {
       // runs.append(new YcsbMSTOExperiment())
       // runs.append(new YcsbOSTOExperiment())
       // runs.append(new YcsbTSTOExperiment())
-      Seq(PartitionMode.PWV, PartitionMode.Granola, PartitionMode.Bohm) foreach {
-        implicit mode =>
-        //runs.append(new YcsbPartitionExperiment())
-      }
+      //Seq(PartitionMode.PWV, PartitionMode.Granola, PartitionMode.Bohm) foreach {
+      //  implicit mode =>
+      //  runs.append(new YcsbPartitionExperiment())
+      //}
       // Deprecated:
       // runs.append(new YcsbCaracalSerialExperiment())
       // runs.append(new YcsbFoedusExperiment())
@@ -649,9 +653,9 @@ object ExperimentsMain extends App {
            setupExperiments(cfg)
     }*/
       
-    for (cpu <- Seq(24)) {
-      for (contend <- Seq(false, true)) {
-        for (skewFactor <- Seq(0, 90)) {
+    for (cpu <- Seq(8)) {
+      for (contend <- Seq(false/*,true*/)) {
+        for (skewFactor <- Seq(0/*,90*/)) {
           // val mem = 32
           val mem = 18
           for (cfg <- Seq(new YcsbExperimentConfig(cpu, mem, skewFactor, if (contend) 7 else 0))) {
@@ -687,8 +691,10 @@ object ExperimentsMain extends App {
   def latencyYcsbExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
     val runs = ArrayBuffer[BaseYcsbExperiment]()
 
-    implicit val config = new YcsbExperimentConfig(cpu, 18, 0, 0, false, 0)
-    runs.append(new YcsbCaracalPieceExperiment())
+    for (skew <- Seq(0)) {
+      implicit val config = new YcsbExperimentConfig(cpu, 18, skew, 0, false, 0)
+      runs.append(new YcsbCaracalPieceExperiment())
+    }
 
     runs
   }
@@ -752,10 +758,10 @@ object ExperimentsMain extends App {
   ExperimentSuite("YcsbLatency", "Latency v.s. Throughput by tunning epoch size") {
     runs: ArrayBuffer[Experiment] =>
 
-    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000)) {
-      for (interArrival <- Seq(100, 200, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000)){
+    for (epochSize <- Seq(/*100, 500, 1000, 5000, */10000, 20000, 50000)) {
+      for (interArrival <- Seq(50/*, 200, 400, 600, 800, 1000, 2000, 4000 ,6000, 8000, 10000, 15000, 20000*/)){
         implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
-        implicit val cpu = 24
+        implicit val cpu = 16 
         runs ++= latencyYcsbExperiments(cpu)
       }
     }
