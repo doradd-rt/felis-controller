@@ -349,8 +349,8 @@ trait PartitionTuningTrait {
       case PartitionMode.PWV => Array[String]("-XEnablePartition", "-XEnablePWV")
       case PartitionMode.Granola => Array[String]("-XEnablePartition", "-XEnableGranola")
     }
-    val extraLogArgs = ArrayBuffer[String]("-XLogFilxe/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_zipfian_high_cont.txt")
-    Array[String]("-XVHandleLockElision") ++ extra ++ extraLogArgs
+    //val extraLogArgs = ArrayBuffer[String]("-XLogFilxe/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_zipfian_high_cont.txt")
+    Array[String]("-XVHandleLockElision") ++ extra// ++ extraLogArgs
   }
 }
 
@@ -784,11 +784,15 @@ object ExperimentsMain extends App {
   ExperimentSuite("TpccSingle", "Single Node TPC-C") {
     runs: ArrayBuffer[Experiment] =>
 
-    for (cpu <- Seq(8, 16, 24, 32)) {
-      for (singleWarehouse <- Seq(false, true)) {
-        val mem = if (singleWarehouse) 16 else cpu * 2
+    //for (cpu <- Seq(8, 16, 24, 32)) {
+    for (cpu <- Seq(24)) {
+      //for (singleWarehouse <- Seq(false, true)) {
+      for (singleWarehouse <- Seq(false)) {
+        //val mem = if (singleWarehouse) 16 else cpu * 2
+        val mem = 16
+        
         implicit val config = new TpccExperimentConfig(cpu, mem, 1, -1, singleWarehouse)
-        runs.append(new TpccCaracalExperiment())
+        //runs.append(new TpccCaracalExperiment())
 
         // runs.append(new TpccOSTOExperiment())
         // runs.append(new TpccMSTOExperiment())
