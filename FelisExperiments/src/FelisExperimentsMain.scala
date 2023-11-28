@@ -273,9 +273,10 @@ trait CaracalTuningTrait extends Experiment {
     if (latencyConfig.epochSize == -1) {
       Array[String]()
     } else {
-      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/txn_logs/ycsb_uniform_no_cont.txt")
+      //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/txn_logs/ycsb_uniform_no_cont.txt")
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/ycsb_uniform_no_cont.txt")
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/yscb_uniform_100_chain.txt")
+      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/tpcc-deterdb/scripts/tpcc/tpcc_no_cont_wh23.txt")
       extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
       if (latencyConfig.epochSize < 2000) {
         val nrEpoch = 200000 / latencyConfig.epochSize
@@ -395,7 +396,7 @@ abstract class BaseTpccExperiment(implicit val config: TpccExperimentConfig) ext
     addAttribute("readonly-delay")
   
   def nodes = config.nodes
-  def warehouses = if (config.singleWarehouse) 1 else config.cpu * config.nodes
+  def warehouses = if (config.singleWarehouse) 1 else (config.cpu * config.nodes - 1)
 
   override def cpu = config.cpu
   override def memory = config.memory
@@ -414,7 +415,8 @@ abstract class BaseTpccExperiment(implicit val config: TpccExperimentConfig) ext
         (if (warehouses == 1) Array("-XEpochSize30000", "-XNrEpoch120") else Array("-XEpochSize50000", "-XNrEpoch80"))
       else
         Array[String]()) ++
-      cmdArguments()
+      cmdArguments() /*++ Array("-XLogFile/home/scofield/tpcc-deterdb/scripts/tpcc/tpcc_no_cont_wh23.txt") ++
+      Array("-XInterArrivalexp:100")*/
 
       launchProcess(nodeName, args)
     }
@@ -436,11 +438,13 @@ abstract class SingleNodeTpccExperiment(implicit override val config: TpccExperi
 class TpccCaracalExperiment(
   implicit override val config: TpccExperimentConfig,
   implicit val tuningConfig: CaracalTuningConfig = new CaracalTuningConfig(),
+  implicit val latencyConfig: CaracalLatencyConfig = new CaracalLatencyConfig(),
   )
     extends SingleNodeTpccExperiment with CaracalTuningTrait {
 
   addAttribute("caracal")
   addTuningAttributes(tuningConfig)
+  addLatencyAttributes(latencyConfig)
 
   override def plotSymbol = "Caracal"
   override def cmdArguments() = {
@@ -448,9 +452,11 @@ class TpccCaracalExperiment(
     if (warehouses == 1) default = 3
     else default = 1000000
 
-    if (epochSize > 0) default = Math.max(2, default * epochSize / 30000) // Int will overflow here. lol.
+    if (latencyConfig.epochSize == -1) {
+      if (epochSize > 0) default = Math.max(2, default * epochSize / 30000) // Int will overflow here. lol.
+    }
 
-    super.cmdArguments() ++ extraCmdArguments(tuningConfig, default.toInt)
+    super.cmdArguments() ++ extraCmdArguments(tuningConfig, default.toInt) ++extraLatencyArguments(latencyConfig)
   }
 }
 
@@ -708,6 +714,16 @@ object ExperimentsMain extends App {
     runs
   }
 
+  def latencyTpccExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
+    val runs = ArrayBuffer[BaseTpccExperiment]()
+
+    for (singleWarehouse <- Seq(false/*, true*/)) {
+      implicit val config = new TpccExperimentConfig(24, 16, 1, 0, singleWarehouse)
+      runs.append(new TpccCaracalExperiment())
+    }
+    runs
+  }
+
   def tuningTpccExperiments(cpu: Int = 32, reuse: Boolean = false)(implicit tuningConfig: CaracalTuningConfig) = {
     val runs = ArrayBuffer[BaseTpccExperiment]()
 
@@ -792,7 +808,7 @@ object ExperimentsMain extends App {
         val mem = 16
         
         implicit val config = new TpccExperimentConfig(cpu, mem, 1, -1, singleWarehouse)
-        //runs.append(new TpccCaracalExperiment())
+        runs.append(new TpccCaracalExperiment())
 
         // runs.append(new TpccOSTOExperiment())
         // runs.append(new TpccMSTOExperiment())
@@ -800,16 +816,29 @@ object ExperimentsMain extends App {
         // runs.append(new TpccFoedus2PLExperiment())
         // runs.append(new TpccErmiaExperiment())
 
-        Seq(PartitionMode.Bohm, PartitionMode.Granola, PartitionMode.PWV) foreach {
-          implicit mode =>
-          runs.append(new TpccPartitionExperiment())
-        }
+        //Seq(PartitionMode.Bohm, PartitionMode.Granola, PartitionMode.PWV) foreach {
+        //  implicit mode =>
+        //  runs.append(new TpccPartitionExperiment())
+        //}
 
         // Deprecated:
         // runs.append(new TpccFoedusMOCCExperiment())
         // runs.append(new TpccFoedusOCCExperiment())
       }
     }
+  }
+
+  ExperimentSuite("TpccLatency", "Tpcc latency experiment") {
+    runs: ArrayBuffer[Experiment] =>
+
+    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000, 50000)) {
+      for (interArrival <- Seq(50, 200, 400, 600, 800, 1000, 2000/*, 4000, 6000, 8000, 10000, 15000, 20000*/)){
+        implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
+        implicit val cpu = 24 
+        runs ++= latencyTpccExperiments(cpu)
+      }
+    }
+
   }
 
   ExperimentSuite("EpochSizeTuning", "Tpcc with different epoch sizes") {
