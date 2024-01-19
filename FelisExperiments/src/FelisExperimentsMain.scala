@@ -275,8 +275,9 @@ trait CaracalTuningTrait extends Experiment {
     } else {
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/txn_logs/ycsb_uniform_no_cont.txt")
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/ycsb_uniform_no_cont.txt")
-      //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/yscb_uniform_100_chain.txt")
-      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/tpcc-deterdb/scripts/tpcc/tpcc_no_cont_wh23.txt")
+      val replayed_log_dir = "/home/scofield/tpcc-deterdb/scripts/tpcc/dorad-log/"
+      val replayed_log_path = "tpcc_high_cont.txt"
+      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile" ++ s"$replayed_log_dir" ++ s"$replayed_log_path")
       extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
       if (latencyConfig.epochSize < 2000) {
         val nrEpoch = 200000 / latencyConfig.epochSize
@@ -396,7 +397,7 @@ abstract class BaseTpccExperiment(implicit val config: TpccExperimentConfig) ext
     addAttribute("readonly-delay")
   
   def nodes = config.nodes
-  def warehouses = if (config.singleWarehouse) 1 else (config.cpu * config.nodes - 1)
+  def warehouses = if (config.singleWarehouse) 1 else 8 //(config.cpu * config.nodes - 1)
 
   override def cpu = config.cpu
   override def memory = config.memory
@@ -717,10 +718,10 @@ object ExperimentsMain extends App {
   def latencyTpccExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
     val runs = ArrayBuffer[BaseTpccExperiment]()
 
-    for (singleWarehouse <- Seq(false/*, true*/)) {
-      implicit val config = new TpccExperimentConfig(24, 16, 1, 0, singleWarehouse)
-      runs.append(new TpccCaracalExperiment())
-    }
+    val singleWarehouse = true
+    implicit val config = new TpccExperimentConfig(24, 16, 1, 0, singleWarehouse)
+    runs.append(new TpccCaracalExperiment())
+    
     runs
   }
 
@@ -831,8 +832,8 @@ object ExperimentsMain extends App {
   ExperimentSuite("TpccLatency", "Tpcc latency experiment") {
     runs: ArrayBuffer[Experiment] =>
 
-    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000, 50000)) {
-      for (interArrival <- Seq(50, 200, 400, 600, 800, 1000, 2000/*, 4000, 6000, 8000, 10000, 15000, 20000*/)){
+    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000/*, 50000*/)) {
+      for (interArrival <- Seq(50, 200, 400, 600, 800, 1000, 2000, 4000/*, 6000, 8000, 10000, 15000, 20000*/)){
         implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
         implicit val cpu = 24 
         runs ++= latencyTpccExperiments(cpu)
