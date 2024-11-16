@@ -80,7 +80,7 @@ aggregate_res() {
 }
 
 # workflow
-#start_server
+start_server
 
 run_all "runTpccLatency"
 aggregate_res
