@@ -72,11 +72,11 @@ parse_params() {
   # check required params and arguments
   [[ -z "${contention-}" ]] && die "Missing required parameter: contention"
   case "$contention" in
-    "low" | "mid" | "high")
+    "low" | "mod" | "high")
         echo "Parameter is valid: $contention"
         ;;
     *)
-        echo "Error: Invalid parameter. It must be 'low', 'mid', or 'high'."
+        echo "Error: Invalid parameter. It must be 'low', 'mod', or 'high'."
         exit 1
         ;;
   esac
@@ -140,10 +140,10 @@ contention_setup() {
       set_log_path "no"
       set_flag "false"
       ;;
-    "mid" )
-      msg "mid contention"
+    "mod" )
+      msg "mod contention"
       set_warehouse 8
-      set_log_path "mid"
+      set_log_path "mod"
       set_flag "false"
       ;;
     "high" )

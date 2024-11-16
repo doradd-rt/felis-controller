@@ -23,11 +23,11 @@ setup_controller_script() {
 }
 
 run_all() {
-  setup_controller_script "low"
-  java -jar $script_dir/../out/FelisExperiments/assembly.dest/out.jar $1
-  mv $script_dir/../../felis/results/singlenode-tpcc/ $script_dir/../../felis/results/singlenodelow-tpcc/
+  # setup_controller_script "low"
+  # java -jar $script_dir/../out/FelisExperiments/assembly.dest/out.jar $1
+  # mv $script_dir/../../felis/results/singlenode-tpcc/ $script_dir/../../felis/results/singlenodelow-tpcc/
 
-  setup_controller_script "mid"
+  setup_controller_script "mod"
   java -jar $script_dir/../out/FelisExperiments/assembly.dest/out.jar $1
 
   setup_controller_script "high"
@@ -45,7 +45,7 @@ check_pattern() {
 
 aggregate_res() {
   local low_dir="singlenodelow-tpcc"
-  local mid_dir="singlenode-tpcc"
+  local mod_dir="singlenode-tpcc"
   local high_dir="singlewarehouse-tpcc"
 
   local stats_script="$script_dir/../../felis/scripts/stats.sh"
@@ -68,10 +68,10 @@ aggregate_res() {
   mv "$script_dir/agg_res.txt" "$script_dir/tpcc_low_cont.txt"
   python $gen_csv_script "$script_dir/tpcc_low_cont.txt"
 
-  set_res_path $mid_dir
+  set_res_path $mod_dir
   $stats_script && $aggre_script
-  mv "$script_dir/agg_res.txt" "$script_dir/tpcc_mid_cont.txt"
-  python $gen_csv_script "$script_dir/tpcc_mid_cont.txt"
+  mv "$script_dir/agg_res.txt" "$script_dir/tpcc_mod_cont.txt"
+  python $gen_csv_script "$script_dir/tpcc_mod_cont.txt"
 
   set_res_path $high_dir
   $stats_script && $aggre_script

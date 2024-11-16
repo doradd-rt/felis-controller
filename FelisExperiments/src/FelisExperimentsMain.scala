@@ -275,7 +275,7 @@ trait CaracalTuningTrait extends Experiment {
     } else {
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/txn_logs/ycsb_uniform_no_cont.txt")
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/ycsb_uniform_no_cont.txt")
-      val replayed_log_dir = "/home/scofield/tpcc-deterdb/scripts/tpcc/dorad-log/"
+      val replayed_log_dir = "/home/scofield/doradd/scripts/tpcc/input-log/"
       val replayed_log_path = "tpcc_high_cont.txt"
       val extraLatencyArgs = ArrayBuffer[String]("-XLogFile" ++ s"$replayed_log_dir" ++ s"$replayed_log_path")
       extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
