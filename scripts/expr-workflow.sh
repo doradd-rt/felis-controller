@@ -23,9 +23,9 @@ setup_controller_script() {
 }
 
 run_all() {
-  # setup_controller_script "low"
-  # java -jar $script_dir/../out/FelisExperiments/assembly.dest/out.jar $1
-  # mv $script_dir/../../felis/results/singlenode-tpcc/ $script_dir/../../felis/results/singlenodelow-tpcc/
+  setup_controller_script "low"
+  java -jar $script_dir/../out/FelisExperiments/assembly.dest/out.jar $1
+  mv $script_dir/../../felis/results/singlenode-tpcc/ $script_dir/../../felis/results/singlenodelow-tpcc/
 
   setup_controller_script "mod"
   java -jar $script_dir/../out/FelisExperiments/assembly.dest/out.jar $1
