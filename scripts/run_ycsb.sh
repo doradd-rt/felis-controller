@@ -18,6 +18,17 @@ start_server() {
   sleep 2
 }
 
+replace_user_in_line() {
+  local file="${script_dir}/../FelisExperiments/src/FelisExperimentsMain.scala"
+  local line_number=275 # Line number to replace
+  local current_user=$(whoami)  # Get the current username
+
+  # Replace the line with the updated username
+  sed -i "${line_number}s|/home/scofield/|/home/${current_user}/|" "$file"
+
+  echo "Updated line $line_number in $file with the current username: $current_user"
+}
+
 setup_controller_script() {
   ./setup.sh -c $1
 }
@@ -90,6 +101,7 @@ aggregate_res() {
 
 # workflow
 start_server
+replace_user_in_line
 
 run_all "runYcsbLatency"
 aggregate_res

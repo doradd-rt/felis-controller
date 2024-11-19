@@ -103,9 +103,38 @@ check_pattern() {
   fi
 }
 
+set_cont() {
+  local mode=$1  # "no" or "yes"
+  local file="${script_dir}/../FelisExperiments/src/FelisExperimentsMain.scala"
+  local line_number=56
+
+  if [ "$mode" == "no" ]; then
+    # Check if the line is commented
+    if sed -n "${line_number}p" "$file" | grep -qE '^\s*//'; then
+      # Uncomment the line by removing "//"
+      sed -i "${line_number}s|^\s*//||" "$file"
+      echo "Line $line_number has been uncommented."
+    else
+      echo "Line $line_number is already uncommented."
+    fi
+  elif [ "$mode" == "yes" ]; then
+    # Check if the line is uncommented
+    if ! sed -n "${line_number}p" "$file" | grep -qE '^\s*//'; then
+      # Comment the line by adding "//" at the front
+      sed -i "${line_number}s|^|//|" "$file"
+      echo "Line $line_number has been commented."
+    else
+      echo "Line $line_number is already commented."
+    fi
+  else
+    echo "Invalid mode. Use 'no' to uncomment or 'yes' to comment."
+    return 1
+  fi
+}
+
 contention_setup() {
   # config warehouse cnts and replayed logs
-  local file="../FelisExperiments/src/FelisExperimentsMain.scala"
+  local file="${script_dir}/../FelisExperiments/src/FelisExperimentsMain.scala"
 
   local logpath_pattern="val replayed_log_path = *"
   local logpath_line=276
@@ -114,20 +143,24 @@ contention_setup() {
 
   set_log_path() {
     # TODO: might need to mod dir
-    sed -i "${logpath_line}s/tpcc_[a-z]\{2,4\}_cont/tpcc_$1_cont/" "$file"
+    sed -i "${logpath_line}s/uniform_[a-z]\{2,4\}_cont/uniform_$1_cont/" "$file"
   }
 
   case "$contention" in
     "low" )
       msg "low contention"
       set_log_path "no"
+      set_cont "no"
       ;;
     "mod" )
       msg "mod contention"
       set_log_path "mod"
+      set_cont "yes"
       ;;
     "high" )
+      msg "high contention"
       set_log_path "high"
+      set_cont "yes"
       ;;
   esac
   cd ..
