@@ -272,7 +272,9 @@ trait CaracalTuningTrait extends Experiment {
     if (latencyConfig.epochSize == -1) {
       Array[String]()
     } else {
-      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/ycsb_uniform_no_cont.txt")
+      val replayed_log_dir = "/home/scofield/doradd/scripts/ycsb/"
+      val replayed_log_path = "ycsb_uniform_no_cont.txt"
+      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile" ++ s"$replayed_log_dir" ++ s"$replayed_log_path")
       extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
       if (latencyConfig.epochSize < 2000) {
         val nrEpoch = 200000 / latencyConfig.epochSize
@@ -722,8 +724,8 @@ object ExperimentsMain extends App {
   ExperimentSuite("YcsbLatency", "Latency v.s. Throughput by tunning epoch size") {
     runs: ArrayBuffer[Experiment] =>
 
-    for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000)) {
-      for (interArrival <- Seq(100, 200, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000)){
+    for (epochSize <- Seq(100, 500/*, 1000, 5000, 10000, 20000*/)) {
+      for (interArrival <- Seq(100, 200/*, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000*/)){
         implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
         implicit val cpu = 24
         runs ++= latencyYcsbExperiments(cpu)
