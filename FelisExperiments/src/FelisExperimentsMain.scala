@@ -725,7 +725,7 @@ object ExperimentsMain extends App {
     runs: ArrayBuffer[Experiment] =>
 
     for (epochSize <- Seq(100, 500, 1000, 5000, 10000, 20000)) {
-      for (interArrival <- Seq(100, 200, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000)){
+      for (interArrival <- Seq(100, 200, 400, 600, 800, 1000, 2000, 4000, 6000, 8000, 10000)){
         implicit val latencyConfig = new CaracalLatencyConfig(epochSize, interArrival)
         implicit val cpu = 24
         runs ++= latencyYcsbExperiments(cpu)
