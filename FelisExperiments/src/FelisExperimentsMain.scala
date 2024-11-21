@@ -274,10 +274,10 @@ trait CaracalTuningTrait extends Experiment {
       Array[String]()
     } else {
       //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/txn_logs/ycsb_uniform_no_cont.txt")
-      //val extraLatencyArgs = ArrayBuffer[String]("-XLogFile/home/scofield/work-backup/deterdb/scripts/zipf/caracal/ycsb_uniform_no_cont.txt")
-      val replayed_log_dir = "/home/scofield/doradd/scripts/tpcc/input-log/"
-      val replayed_log_path = "tpcc_high_cont.txt"
-      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile" ++ s"$replayed_log_dir" ++ s"$replayed_log_path")
+      val replayed_log_dir = "~/ppopp-artifact/doradd/scripts/tpcc/input-log/"
+      val updated_log_dir = Array(os.Path.expandUser(replayed_log_dir).toString
+      val replayed_log_path = "tpcc_no_cont.txt"
+      val extraLatencyArgs = ArrayBuffer[String]("-XLogFile" ++ s"$updated_log_dir" ++ s"$replayed_log_path")
       extraLatencyArgs += s"-XEpochSize${latencyConfig.epochSize}" 
       if (latencyConfig.epochSize < 2000) {
         val nrEpoch = 200000 / latencyConfig.epochSize
@@ -397,7 +397,7 @@ abstract class BaseTpccExperiment(implicit val config: TpccExperimentConfig) ext
     addAttribute("readonly-delay")
   
   def nodes = config.nodes
-  def warehouses = if (config.singleWarehouse) 1 else 8 //(config.cpu * config.nodes - 1)
+  def warehouses = if (config.singleWarehouse) 1 else 23 //(config.cpu * config.nodes - 1)
 
   override def cpu = config.cpu
   override def memory = config.memory
@@ -718,7 +718,7 @@ object ExperimentsMain extends App {
   def latencyTpccExperiments(cpu: Int = 24)(implicit latencyConfig: CaracalLatencyConfig) = {
     val runs = ArrayBuffer[BaseTpccExperiment]()
 
-    val singleWarehouse = true
+    val singleWarehouse = false
     implicit val config = new TpccExperimentConfig(24, 16, 1, 0, singleWarehouse)
     runs.append(new TpccCaracalExperiment())
     

@@ -14,8 +14,8 @@ class ExperimentRunException extends Exception {}
 object Experiment {
   var ControllerHost = System.getProperty("controller.host", "127.0.0.1:3148")
   var ControllerHttp = System.getProperty("controller.http", "127.0.0.1:8666")
-  var Binary = "~/caracal/felis/buck-out/gen/db#release"
-  var WorkingDir = "~/caracal/felis/results"
+  var Binary = "~/ppopp-artifact/caracal/felis/buck-out/gen/db#release"
+  var WorkingDir = "~/ppopp-artifact/caracal/felis/results"
 }
 
 trait Experiment {
