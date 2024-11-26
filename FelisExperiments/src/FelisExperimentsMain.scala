@@ -272,7 +272,7 @@ trait CaracalTuningTrait extends Experiment {
     if (latencyConfig.epochSize == -1) {
       Array[String]()
     } else {
-      val replayed_log_dir = "~/ppopp-artifact/doradd/scripts/ycsb"
+      val replayed_log_dir = "~/ppopp-artifact/fig5-input-log/ycsb"
       val updated_log_dir = os.Path.expandUser(replayed_log_dir).toString
       val replayed_log_path = "ycsb_uniform_no_cont.txt"
       val extraLatencyArgs = ArrayBuffer[String]("-XLogFile" ++ s"$updated_log_dir/" ++ s"$replayed_log_path")
