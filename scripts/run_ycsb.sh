@@ -70,7 +70,7 @@ aggregate_res() {
   check_pattern $line $aggre_script $pattern
 
   set_res_path() {
-    local res_path_pattern="${line}s|\(res_path=\".*felis/\).*\"|\1results/$1\"|"
+    local res_path_pattern="${line}s|\(res_path=\".*results/\).*\"|\1/$1\"|"
     sed -i $res_path_pattern "${stats_script}"
     sed -i $res_path_pattern "${aggre_script}"
   }
