@@ -45,15 +45,15 @@ To build the felis-controller jar, use:
 	mill FelisController.assembly
 
 This will generate a standalone jar
-`out/FelisController/assembly/dest/out.jar`. Usually, you can run that
+`out/FelisController/assembly.dest/out.jar`. Usually, you can run that
 jar directly.
 
-	java -jar out/FelisController/assembly/dest/out.jar config.json
+	java -jar out/FelisController/assembly.dest/out.jar config.json
 
 But if you are sharing the machine with someone else, you need to
 avoid the cache dir conflict. For example:
 
-	java -Dvertx.cacheDirBase=/tmp/$USER/ -jar out/FelisController/assembly/dest/out.jar config.json
+	java -Dvertx.cacheDirBase=/tmp/$USER/ -jar out/FelisController/assembly.dest/out.jar config.json
 
 
 Run the Experiment Script
@@ -69,7 +69,7 @@ First, build a jar:
 	
 Now you can run:
 
-	java -jar out/FelisExperiments/assembly/dest/out.jar runXXX
+	java -jar out/FelisExperiments/assembly.dest/out.jar runXXX
 
 For instance, `runYcsb` or `runHotspotTpcc`. See the code for further
 details.
