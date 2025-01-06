@@ -50,7 +50,6 @@ aggregate_res() {
 
   local stats_script="$script_dir/../../felis/scripts/stats.sh"
   local aggre_script="$script_dir/../../felis/scripts/aggregate_res.sh"
-  local gen_csv_script="$script_dir/../../felis/scripts/gen_csv_src_for_plot.py"
   local agg_res_path="$script_dir/../../felis/scripts/agg_res.txt"
   local line=11
   local pattern="res_path="
@@ -66,17 +65,14 @@ aggregate_res() {
   set_res_path $low_dir
   $stats_script && $aggre_script
   mv "$script_dir/agg_res.txt" "$script_dir/tpcc_low_cont.txt"
-  python $gen_csv_script "$script_dir/tpcc_low_cont.txt"
 
   set_res_path $mod_dir
   $stats_script && $aggre_script
   mv "$script_dir/agg_res.txt" "$script_dir/tpcc_mod_cont.txt"
-  python $gen_csv_script "$script_dir/tpcc_mod_cont.txt"
 
   set_res_path $high_dir
   $stats_script && $aggre_script
   mv "$script_dir/agg_res.txt" "$script_dir/tpcc_high_cont.txt"
-  python $gen_csv_script "$script_dir/tpcc_high_cont.txt"
 }
 
 # workflow
